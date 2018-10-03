@@ -1,10 +1,11 @@
 import sys
 
+
 def main():
 
     import numpy as np
     import GeneticAlgorithm
-    genesize = 10
+    genesize = 1000
     nbits = round(genesize/2)
 
     def bitsToBytes(values):
@@ -12,6 +13,7 @@ def main():
         return processed
 
     def fitness(gene):
+        gene = np.array([gene])
         one = bitsToBytes(gene[:, 0:nbits])
         two = bitsToBytes(gene[:, nbits:])
         score = np.sum([one, two], axis=0)
@@ -24,13 +26,12 @@ def main():
         bitsToBytes(np.array([[True]*5]))
     # print('DesiredValue:', expected)
 
-    ga = GeneticAlgorithm.GA(genesize, population_size=10,
-                             epochs=1000, maximization=True)
+    ga = GeneticAlgorithm.GA(genesize, population_size=10,epochs=1000, maximization=True)
 
     ga.debug = False
     ga.verbose = True
 
-    best, pop, score = ga.run(fitness)
+    best, pop, score = ga.run(fitness,paralel=True)
     # print(score)
 
     def evaluate(gene):
@@ -43,7 +44,7 @@ def main():
 
         # print(one,two,score)
         print('Achieved: ', score, 'Expected:', expected)
-        
+
         return score
     print('BEST: ', best)
     evaluate(np.array([best]))

@@ -131,9 +131,36 @@ class GA():
                 - Generations for each ephoch: {}
             '''.format(gene_size, population_size, gene_type,epochs,ephoc_generations))
 
-    def run(self, fitness):
+    def run(self, fitness,paralel=False):
         def fitness_handler(pop,fitness):
-            score = fitness(pop)
+            if paralel: 
+                from concurrent.futures import ThreadPoolExecutor 
+
+                # def executor(individual,index,scores):
+                #     scores[index] = fitness(individual)
+                
+                def executor_fn(index):
+                    return fitness(pop[index])
+                
+                e = list(range(pop.shape[0]))
+                score = np.empty(pop.shape[0])
+
+                with ThreadPoolExecutor(max_workers=10) as executor:
+                    
+                    # print(future.result())
+                    for p in range(pop.shape[0]):
+                        e[p] = executor.submit(executor_fn, p)
+                    # ev = threading.Thread(target=executor, args=(pop[p],p,score))
+                    # ev.start()
+                    # e.append(ev)
+                    
+                    for p in range(pop.shape[0]):
+                        score[p] = e[p].result()
+                score = np.array(score)
+            else:
+                score = fitness(pop)
+
+
             evaluations = score.shape[0]
             samples = pop.shape[0]
             if  evaluations != samples:
