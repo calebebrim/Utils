@@ -31,7 +31,7 @@ def main():
     ga.debug = False
     ga.verbose = True
 
-    best, pop, score = ga.run(fitness,paralel=True)
+    best, pop, score = ga.run(fitness,paralel=True,threads=10)
     # print(score)
 
     def evaluate(gene):

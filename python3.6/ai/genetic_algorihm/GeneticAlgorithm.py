@@ -43,8 +43,7 @@ class GAU(object):
         if(dtype == np.bool):
             pop[selector] = np.invert(pop[selector])
         elif (dtype == np.int):
-            pop[selector] = np.random.randint(
-                mn, high=mx, shape=selector.sum())
+            pop[selector] = np.random.randint(mn, high=mx, shape=selector.sum())
 
         return pop
 
@@ -77,7 +76,7 @@ class GAU(object):
         return pop
 
     @staticmethod
-    def __statisics__(self, pop, score):
+    def __statisics__(pop, score):
         '''
             Calculate statistics of each individual and save the scores
         '''
@@ -85,12 +84,12 @@ class GAU(object):
             score), 'avg': np.average(score)}
         # print('Max: ', np.max(score), ' Min: ', np.min(score), ' Average: ', np.average(score))
         # print(metrics)
-        return 
+        return metrics
 
 class GA():
     import numpy as np
     
-    def __init__(self, gene_size, gene_type=np.bool, epochs=1000, selection_count=10, population_size=100,maximization = False, debug=False, verbose=True,ephoc_generations=100, population=GAU.__init_population__, mutation=GAU.__mutation__, crossover=GAU.__crossover__, selection=GAU.__selection__,statistics=GAU.__statisics__):
+    def __init__(self, gene_size, gene_type=np.bool, epochs=1000, selection_count=10, population_size=100,maximization = False, debug=False, verbose=True,ephoc_generations=100, population=GAU.__init_population__, mutation=GAU.__mutation__, crossover=GAU.__crossover__, selection=GAU.__selection__,statistics=GAU.__statisics__,on_ephoc_ends=None):
         ''' 
             Initialize Genetic Algorithm
             
@@ -132,6 +131,7 @@ class GA():
         self.best_score = 0 if maximization else 99999
         self.ephoc_generations = ephoc_generations
         self.statisics = statistics
+        self.on_ephoc_ends_callback = on_ephoc_ends
         if(verbose):
             print('''
                 Generating Population With: 
@@ -146,9 +146,10 @@ class GA():
         self.history['population'].append(pop)
         self.history['score'].append(score)
         self.history['statistics'].append(statistics)
-        ////
+        if self.on_ephoc_ends_callback:
+            self.on_ephoc_ends_callback()
     
-    def fitness_handler(self, pop, fitness,paralel):
+    def fitness_handler(self, pop, fitness,paralel,threads=1):
         if paralel:
             from concurrent.futures import ThreadPoolExecutor
 
@@ -161,7 +162,7 @@ class GA():
             e = list(range(pop.shape[0]))
             score = np.empty(pop.shape[0])
 
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor(max_workers=threads) as executor:
 
                 # print(future.result())
                 for p in range(pop.shape[0]):
@@ -185,14 +186,14 @@ class GA():
 
 
 
-    def run(self, fitness,paralel=False):
+    def run(self, fitness,paralel=False,threads=1):
         
             
         if(self.debug):print('Initializing Population...')
         pop = self.population(
             self.gene_size, self.population_size, dtype=self.populationType)
         
-        score = self.fitness_handler(pop,fitness,paralel)
+        score = self.fitness_handler(pop,fitness,paralel,threads)
         statistics = self.statisics(pop, score)
         pop,score = self.selection(pop, score, self.selection_count,maximization=self.maximization)
 
