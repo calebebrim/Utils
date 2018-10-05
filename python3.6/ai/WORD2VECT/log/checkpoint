@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/calebebrim/Documents/python/ZeroDistrato/WORD2VECT/log/model.ckpt"
+all_model_checkpoint_paths: "/Users/calebebrim/Documents/python/ZeroDistrato/WORD2VECT/log/model.ckpt"

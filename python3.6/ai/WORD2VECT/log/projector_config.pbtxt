@@ -1,0 +1,4 @@
+embeddings {
+  tensor_name: "embeddings/Variable:0"
+  metadata_path: "/Users/calebebrim/Documents/python/ZeroDistrato/WORD2VECT/log/metadata.tsv"
+}
