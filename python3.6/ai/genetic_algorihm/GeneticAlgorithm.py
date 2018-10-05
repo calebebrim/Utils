@@ -76,11 +76,21 @@ class GAU(object):
             pop = np.append(pop, cross, axis=0)
         return pop
 
+    @staticmethod
+    def __statisics__(self, pop, score):
+        '''
+            Calculate statistics of each individual and save the scores
+        '''
+        metrics = {'max': np.max(score), 'min': np.min(
+            score), 'avg': np.average(score)}
+        # print('Max: ', np.max(score), ' Min: ', np.min(score), ' Average: ', np.average(score))
+        # print(metrics)
+        return 
 
 class GA():
     import numpy as np
     
-    def __init__(self, gene_size, gene_type=np.bool, epochs=1000, selection_count=10, population_size=100,maximization = False, debug=False, verbose=True,ephoc_generations=100, population=GAU.__init_population__, mutation=GAU.__mutation__, crossover=GAU.__crossover__, selection=GAU.__selection__):
+    def __init__(self, gene_size, gene_type=np.bool, epochs=1000, selection_count=10, population_size=100,maximization = False, debug=False, verbose=True,ephoc_generations=100, population=GAU.__init_population__, mutation=GAU.__mutation__, crossover=GAU.__crossover__, selection=GAU.__selection__,statistics=GAU.__statisics__):
         ''' 
             Initialize Genetic Algorithm
             
@@ -121,6 +131,7 @@ class GA():
         self.maximization = maximization
         self.best_score = 0 if maximization else 99999
         self.ephoc_generations = ephoc_generations
+        self.statisics = statistics
         if(verbose):
             print('''
                 Generating Population With: 
@@ -131,93 +142,90 @@ class GA():
                 - Generations for each ephoch: {}
             '''.format(gene_size, population_size, gene_type,epochs,ephoc_generations))
 
+    def on_ephoc_ends(self,pop,score,statistics):
+        self.history['population'].append(pop)
+        self.history['score'].append(score)
+        self.history['statistics'].append(statistics)
+        ////
+    
+    def fitness_handler(self, pop, fitness,paralel):
+        if paralel:
+            from concurrent.futures import ThreadPoolExecutor
+
+            # def executor(individual,index,scores):
+            #     scores[index] = fitness(individual)
+
+            def executor_fn(index):
+                return fitness(pop[index])
+
+            e = list(range(pop.shape[0]))
+            score = np.empty(pop.shape[0])
+
+            with ThreadPoolExecutor(max_workers=10) as executor:
+
+                # print(future.result())
+                for p in range(pop.shape[0]):
+                    e[p] = executor.submit(executor_fn, p)
+                # ev = threading.Thread(target=executor, args=(pop[p],p,score))
+                # ev.start()
+                # e.append(ev)
+
+                for p in range(pop.shape[0]):
+                    score[p] = e[p].result()
+            score = np.array(score)
+        else:
+            score = fitness(pop)
+
+        evaluations = score.shape[0]
+        samples = pop.shape[0]
+        if evaluations != samples:
+            raise Exception("The number of returned evaluations ({}) must be equals to provided samples ({}). ".format(
+                evaluations, samples))
+        return score
+
+
+
     def run(self, fitness,paralel=False):
-        def fitness_handler(pop,fitness):
-            if paralel: 
-                from concurrent.futures import ThreadPoolExecutor 
-
-                # def executor(individual,index,scores):
-                #     scores[index] = fitness(individual)
-                
-                def executor_fn(index):
-                    return fitness(pop[index])
-                
-                e = list(range(pop.shape[0]))
-                score = np.empty(pop.shape[0])
-
-                with ThreadPoolExecutor(max_workers=10) as executor:
-                    
-                    # print(future.result())
-                    for p in range(pop.shape[0]):
-                        e[p] = executor.submit(executor_fn, p)
-                    # ev = threading.Thread(target=executor, args=(pop[p],p,score))
-                    # ev.start()
-                    # e.append(ev)
-                    
-                    for p in range(pop.shape[0]):
-                        score[p] = e[p].result()
-                score = np.array(score)
-            else:
-                score = fitness(pop)
-
-
-            evaluations = score.shape[0]
-            samples = pop.shape[0]
-            if  evaluations != samples:
-                raise Exception("The number of returned evaluations ({}) must be equals to provided samples ({}). ".format(evaluations,samples))
-            return score
+        
+            
         if(self.debug):print('Initializing Population...')
         pop = self.population(
             self.gene_size, self.population_size, dtype=self.populationType)
         
-
-        score = fitness_handler(pop,fitness)
+        score = self.fitness_handler(pop,fitness,paralel)
         statistics = self.statisics(pop, score)
-
-        self.history['population'].append(pop)
-        self.history['score'].append(score)
-        self.history['statistics'].append(statistics)
-        
         pop,score = self.selection(pop, score, self.selection_count,maximization=self.maximization)
+
+        self.on_ephoc_ends(pop, score, statistics)
         for i in range(1,self.maxepochs+1):
-            
-            
-            
             pop = self.crossover(pop)
             if(self.debug):print('Crossover>>', pop.shape)
             pop = self.mutation(pop)
             if(self.debug):print('Mutation>>', pop.shape)
-            score = fitness_handler(pop, fitness)
+            
+            score = self.fitness_handler(pop, fitness,paralel)
             statistics = self.statisics(pop, score)
             pop,score = self.selection(pop, score, selection_count=self.selection_count,maximization=self.maximization)
+            
             if self.maximization:
                 if(score[0] > self.best_score):
                     self.best_pop, self.best_score = (pop[0], score[0])
             else:
                 if(score[0] < self.best_score):
                     self.best_pop, self.best_score = (pop[0], score[0])
+
+
             if(self.debug):print('Selection>>', pop.shape)
-            # print(pop)
+            
+
             if(self.verbose & ((i % self.ephoc_generations)==0)): 
                 print("================EPOCH ({}/{})=======================".format(i, self.ephoc_generations))
                 print(statistics)
                 print('Best: ',self.best_score)
 
-            self.history['population'].append(pop)
-            self.history['score'].append(score)
-            self.history['statistics'].append(statistics)
-        # pop = self.selection(pop, score, self.selection_count)
+            self.on_ephoc_ends(pop, score, statistics)
         
         return self.best_pop, pop, score
 
-    def statisics(self, pop, score):
-        '''
-            Calculate statistics of each individual and save the scores
-        '''
-        metrics = {'max': np.max(score), 'min': np.min(
-            score), 'avg': np.average(score)}
-        # print('Max: ', np.max(score), ' Min: ', np.min(score), ' Average: ', np.average(score))
-        # print(metrics)
-        return metrics
-
+    
 
