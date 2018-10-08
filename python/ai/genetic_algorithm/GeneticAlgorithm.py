@@ -149,7 +149,7 @@ class GA():
         if self.on_ephoc_ends_callback:
             self.on_ephoc_ends_callback()
     
-    def fitness_handler(self, pop, fitness,paralel,threads=1):
+    def fitness_handler(self, pop, fitness,paralel,threads=1,multiple=True):
         if paralel:
             from concurrent.futures import ThreadPoolExecutor
 
@@ -174,6 +174,11 @@ class GA():
                 for p in range(pop.shape[0]):
                     score[p] = e[p].result()
             score = np.array(score)
+        elif ~multiple:
+            score = []
+            for gene in pop:
+                score.append(fitness(gene))
+            score = np.array(score)
         else:
             score = fitness(pop)
 
@@ -186,23 +191,25 @@ class GA():
 
 
 
-    def run(self, fitness,paralel=False,threads=1):
+    def run(self, fitness,paralel=False,threads=1,multiple=True):
         
             
         if(self.debug):print('Initializing Population...')
         pop = self.population(
             self.gene_size, self.population_size, dtype=self.populationType)
         
-        score = self.fitness_handler(pop,fitness,paralel,threads)
+        score = self.fitness_handler(pop,fitness=fitness,paralel=paralel,threads=threads,multiple=multiple)
         statistics = self.statisics(pop, score)
         pop,score = self.selection(pop, score, self.selection_count,maximization=self.maximization)
 
         self.on_ephoc_ends(pop, score, statistics)
         for i in range(1,self.maxepochs+1):
+            if(self.debug):print('epoch>>', i)
+            
             pop = self.crossover(pop)
-            if(self.debug):print('Crossover>>', pop.shape)
+            # if(self.debug):print('Crossover>>', pop.shape)
             pop = self.mutation(pop)
-            if(self.debug):print('Mutation>>', pop.shape)
+            # if(self.debug):print('Mutation>>', pop.shape)
             
             score = self.fitness_handler(pop, fitness,paralel)
             statistics = self.statisics(pop, score)

@@ -1,9 +1,10 @@
 import sys
+import numpy as np
+from .. import GeneticAlgorithm
 
 def main():
 
-    import numpy as np
-    import GeneticAlgorithm
+    
     genesize = 10
     nbits = round(genesize/2)
 
