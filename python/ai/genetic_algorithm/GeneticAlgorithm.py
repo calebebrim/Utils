@@ -11,6 +11,7 @@ class GAU(object):
         __mutation__
         __selection__
         __crossover__
+        __statisics__
 
     '''
 
@@ -37,9 +38,10 @@ class GAU(object):
             return np.random.randint(mn, high=mx, size=(population_size, gene_size))
 
     @staticmethod
-    def __mutation__(pop, mutation_prob=0.9, mn=-10000, mx=10000, dtype=np.bool):
+    def __mutation__(pop, mutation_prob=0.6, mn=-10000, mx=10000, dtype=np.bool):
         selector = np.random.choice([True, False], pop.shape, p=[mutation_prob, 1-mutation_prob])
         # print(selector.shape)
+        # print(selector)
         if(dtype == np.bool):
             pop[selector] = np.invert(pop[selector])
         elif (dtype == np.int):
@@ -174,16 +176,20 @@ class GA():
                 for p in range(pop.shape[0]):
                     score[p] = e[p].result()
             score = np.array(score)
-        elif ~multiple:
+        elif multiple:
+            # print('Using Multiple')
+            score = fitness(pop)
+        else:
+            # print('Not Using Multiple')
             score = []
             for gene in pop:
-                score.append(fitness(gene))
+                curr = fitness(gene)
+                score.append(curr)
             score = np.array(score)
-        else:
-            score = fitness(pop)
 
         evaluations = score.shape[0]
         samples = pop.shape[0]
+
         if evaluations != samples:
             raise Exception("The number of returned evaluations ({}) must be equals to provided samples ({}). ".format(
                 evaluations, samples))
@@ -192,8 +198,15 @@ class GA():
 
 
     def run(self, fitness,paralel=False,threads=1,multiple=True):
-        
+        '''
+            Used to effectivelly run the genetic algorithm
+
+            Usage: 
             
+                ga = GA(gene_size=1000,population_size=100,maximization=False,epochs=100)
+
+                (best_pop, pop, score) = ga.run(lambda genes: sum(genes),multiple=False)
+        '''
         if(self.debug):print('Initializing Population...')
         pop = self.population(
             self.gene_size, self.population_size, dtype=self.populationType)
@@ -211,7 +224,8 @@ class GA():
             pop = self.mutation(pop)
             # if(self.debug):print('Mutation>>', pop.shape)
             
-            score = self.fitness_handler(pop, fitness,paralel)
+            score = self.fitness_handler(pop, fitness=fitness, paralel=paralel, threads=threads, multiple=multiple)
+
             statistics = self.statisics(pop, score)
             pop,score = self.selection(pop, score, selection_count=self.selection_count,maximization=self.maximization)
             

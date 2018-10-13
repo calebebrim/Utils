@@ -127,14 +127,14 @@ def xlsbToXlsx(path_in, path_out,separate_sheets=False, print_interval=1000):
             print('Saving Failed')
 
 
-def xlsbToCSV(path_in, path_out,sep=";", print_interval=1000):
+def xlsbToCSV(path_in, path_out,sep=";", print_interval=1000,date_columns=[]):
     print('parsing to csv..')
     row_count = 0
     with open_workbook(path_in) as wb:
         for s in wb.sheets:
             with wb.get_sheet(s) as sheet:
                 print('reading sheet',s)
-                with open(path_out+'/'+s+'.csv', 'w', encoding='utf-8') as csvfile:
+                with open(path_in.replace('.xlsb','.'+s)+'.csv', 'w', encoding='utf-8') as csvfile:
                     spamwriter = csv.writer(csvfile, delimiter=sep, quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     sheet = list(sheet)
                     for row in sheet:
@@ -154,13 +154,28 @@ if __name__ == '__main__':
     # FUNCTIONNAME 1 
     # print(sys.argv)
     # parse_xlsb
+    try:
+        print(sys.argv)
+        if(sys.argv[1] == 'xls'):
+            from_path = sys.argv[2]
+            to_path = sys.argv[3]
+            xlsbToXlsx(from_path, to_path,
+                    separate_sheets=True, print_interval=500)
+        elif(sys.argv[1] == 'csv'):
+            from_path = sys.argv[2]
+            to_path = sys.argv[3]
+            xlsbToCSV(from_path, to_path, print_interval=500)
+    except Exception as ex:
+        print(ex)
+        print("""
+            Process xlsb worksheets with multiple sheets. 
+
+            USAGE: 
+            python xlsb_utils.py 'csv'|'xlsx' file_in  path_out
+
+            csv parsing out example: 
+                file1.sheet1.csv
+                file1.sheet2.csv
+                file2.sheet1.csv ...
+        """)
     
-    print(sys.argv)
-    if( sys.argv[1] == 'xls'): 
-        from_path = sys.argv[2]
-        to_path = sys.argv[3]
-        xlsbToXlsx(from_path,to_path,separate_sheets=True,print_interval=500)
-    elif( sys.argv[1] == 'csv'): 
-        from_path = sys.argv[2]
-        to_path = sys.argv[3]
-        xlsbToCSV(from_path,to_path,print_interval=500)

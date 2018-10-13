@@ -1,10 +1,10 @@
 import sys
 import numpy as np
-from genetic_algorithm import GeneticAlgorithm
-from data_processing.binary_ops import bitsToBytes
-from data_processing.binary_ops import bitsNeededToNumber
+from ai.genetic_algorithm import GeneticAlgorithm
+from ai.data_processing.binary_ops import bitsToBytes
+from ai.data_processing.binary_ops import bitsNeededToNumber
 
-
+import unittest
 
 def neuronValue(V,W,b, x_neuron):
     '''
@@ -16,17 +16,15 @@ def neuronValue(V,W,b, x_neuron):
 
     '''
     w_s = W[:, x_neuron] > 0
-    V[x_neuron]=V[w_s]*W[w_s,x_neuron]
+    V[x_neuron]=V[w_s].dot(W[w_s,x_neuron])+b[x_neuron]
+    print('b:', b)
+    print('x_neuron:', x_neuron)
+    print('W:', W)
+    print('V:',V)
+    
 
 
-def testNeuronValue():
-    V = np.zeros(8)
-    b = np.zeros(8)
-    W = np.zeros((8,8))
 
-    np.put(V,[0,1],[1,2])
-    no.put(W,[(0,2),(1,2)],[1,1])
-    assert neuronValue(V,W,b,3) == 3
 
 
 
