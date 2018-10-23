@@ -38,7 +38,7 @@ class GAU(object):
             return np.random.randint(mn, high=mx, size=(population_size, gene_size))
 
     @staticmethod
-    def __mutation__(pop, mutation_prob=0.6, mn=-10000, mx=10000, dtype=np.bool):
+    def __mutation__(pop, mutation_prob=0.85, mn=-10000, mx=10000, dtype=np.bool):
         selector = np.random.choice([True, False], pop.shape, p=[mutation_prob, 1-mutation_prob])
         # print(selector.shape)
         # print(selector)
@@ -59,7 +59,7 @@ class GAU(object):
         # print(score[sindex]) # << score
         selection = pop[sindex[0:selection_count]]
         # selection = np.random.shuffle(selection)
-        return selection, score[sindex]
+        return selection, score[sindex[0:selection_count]]
 
     @staticmethod
     def __crossover__(pop):
@@ -142,7 +142,8 @@ class GA():
                 - Population Type: {}
                 - Ephocs: {}
                 - Generations for each ephoch: {}
-            '''.format(gene_size, population_size, gene_type,epochs,ephoc_generations))
+                - Selection Count: {}
+            '''.format(gene_size, population_size, gene_type,epochs,ephoc_generations,self.selection_count))
 
     def on_ephoc_ends(self,pop,score,statistics):
         self.history['population'].append(pop)
@@ -214,11 +215,13 @@ class GA():
         score = self.fitness_handler(pop,fitness=fitness,paralel=paralel,threads=threads,multiple=multiple)
         statistics = self.statisics(pop, score)
         pop,score = self.selection(pop, score, self.selection_count,maximization=self.maximization)
-
+        self.best_pop, self.best_score = (pop[0], score[0])
+        
         self.on_ephoc_ends(pop, score, statistics)
         for i in range(1,self.maxepochs+1):
             if(self.debug):print('epoch>>', i)
-            
+            pop = np.concatenate((pop,np.array([self.best_pop])),axis=0)
+
             pop = self.crossover(pop)
             # if(self.debug):print('Crossover>>', pop.shape)
             pop = self.mutation(pop)
