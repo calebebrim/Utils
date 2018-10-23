@@ -1,0 +1,1 @@
+PYSPARK_DRIVER_PYTHON=ipython & pyspark --packages com.github.zuinnote:spark-hadoopoffice-ds_2.11:1.0.4
