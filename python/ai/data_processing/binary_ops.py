@@ -1,13 +1,21 @@
 import numpy as np
 
 def bitsToBytes(values):
+    '''
+        Generate relative bits integers
+        Usage: 
+
+            bitsToBytes(array.shape(1,10)) => array.shape(1,1)
+            bitsToBytes(array.shape(2,10)) => array.shape(2,1)
+    '''
     ln = values.shape[1] if values.ndim > 1 else values.shape[0]
     processed = np.array(values.dot(2**np.arange(ln)[::-1]))
     return processed
 
 
 def bitsNeededToNumber(number,nbits=1):
-    if np.array(np.ones((1,nbits)).dot(2**np.arange(nbits)[::-1]))>=number:
+    ar = np.array(np.ones((1, nbits)).dot(2**np.arange(nbits)[::-1]))
+    if ar >=number:
         return nbits
     else: 
         return bitsNeededToNumber(number,nbits+1)
