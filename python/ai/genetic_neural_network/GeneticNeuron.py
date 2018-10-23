@@ -106,14 +106,6 @@ class GeneticNeuronConfigurationError(Exception):
         self.errors = errors
 
 
-def testInCount():
-    try:
-        GN = GeneticNeuron(in_count=4, out_count=3, max_number=10)
-        GN.run(np.array([[]]), None)
-    except Exception as ex:
-        assert("GeneticNeuronConfigurationError", ex.__class__.__name__)
-
-
 def main():
     import inspect
     import os
